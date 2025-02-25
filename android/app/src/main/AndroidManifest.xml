@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="cinco_linguagens"
+        android:label="Cinco Linguagens"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
