@@ -10,7 +10,7 @@ class ResultScreen extends StatelessWidget {
   const ResultScreen({super.key, required this.scores, required this.gender});
 
   Map<String, double> calculatePercentages() {
-    final total = scores.values.reduce((a, b) => a + b);
+    final total = scores.values.isNotEmpty ? scores.values.reduce((a, b) => a + b) : 1;
     return {
       'Palavras de Afirmação': (scores['A']! / total) * 100,
       'Tempo de Qualidade': (scores['B']! / total) * 100,
@@ -20,7 +20,7 @@ class ResultScreen extends StatelessWidget {
     };
   }
 
-  String getPrimaryLanguage() {
+  List<MapEntry<String, String>> getTopLanguages() {
     final languages = {
       'A': 'Palavras de Afirmação',
       'B': 'Tempo de Qualidade',
@@ -28,11 +28,16 @@ class ResultScreen extends StatelessWidget {
       'D': 'Atos de Serviço',
       'E': 'Toque Físico',
     };
-    var highest = scores.entries.reduce((a, b) => a.value > b.value ? a : b);
-    return languages[highest.key]!;
+    var sortedEntries = scores.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    var maxScore = sortedEntries.first.value;
+    return sortedEntries
+        .where((entry) => entry.value == maxScore)
+        .map((entry) => MapEntry(entry.key, languages[entry.key]!))
+        .toList();
   }
 
-  Color getPrimaryColor() {
+  List<TextSpan> getResultTextSpans() {
+    final topLanguages = getTopLanguages();
     final colors = {
       'A': Colors.red,
       'B': Colors.blue,
@@ -40,8 +45,16 @@ class ResultScreen extends StatelessWidget {
       'D': Colors.purple,
       'E': Colors.green,
     };
-    var highest = scores.entries.reduce((a, b) => a.value > b.value ? a : b);
-    return colors[highest.key]!;
+    return topLanguages.map((entry) {
+      return TextSpan(
+        text: entry == topLanguages.last && topLanguages.length > 1 ? ' e ${entry.value}' : entry.value,
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: colors[entry.key]!,
+        ),
+      );
+    }).toList();
   }
 
   List<Widget> _generateShapes(BuildContext context) {
@@ -153,6 +166,7 @@ class ResultScreen extends StatelessWidget {
       Colors.purple,
       Colors.green,
     ];
+    final topLanguages = getTopLanguages();
 
     return Scaffold(
       appBar: AppBar(
@@ -177,22 +191,17 @@ class ResultScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                     text: TextSpan(
                       children: [
-                        const TextSpan(
-                          text: 'Sua linguagem de amor é ',
-                          style: TextStyle(
+                        TextSpan(
+                          text: topLanguages.length > 1
+                              ? 'Suas linguagens de amor são '
+                              : 'Sua linguagem de amor é ',
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
                         ),
-                        TextSpan(
-                          text: getPrimaryLanguage(),
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: getPrimaryColor(),
-                          ),
-                        ),
+                        ...getResultTextSpans(),
                       ],
                     ),
                   ),
